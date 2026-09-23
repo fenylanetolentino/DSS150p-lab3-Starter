@@ -1,0 +1,24 @@
+[2026-09-23T15:18:23.550+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-09-23T15:18:23.601+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dss150p_sales_pipeline.load manual__2026-09-23T15:17:47+00:00 [queued]>
+[2026-09-23T15:18:23.619+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dss150p_sales_pipeline.load manual__2026-09-23T15:17:47+00:00 [queued]>
+[2026-09-23T15:18:23.622+0000] {taskinstance.py:2867} INFO - Starting attempt 1 of 3
+[2026-09-23T15:18:23.645+0000] {taskinstance.py:2890} INFO - Executing <Task(BashOperator): load> on 2026-09-23 15:17:47+00:00
+[2026-09-23T15:18:23.659+0000] {standard_task_runner.py:72} INFO - Started process 1191 to run task
+[2026-09-23T15:18:23.667+0000] {standard_task_runner.py:104} INFO - Running: ['airflow', 'tasks', 'run', 'dss150p_sales_pipeline', 'load', 'manual__2026-09-23T15:17:47+00:00', '--job-id', '13', '--raw', '--subdir', 'DAGS_FOLDER/dss150p_pipeline.py', '--cfg-path', '/tmp/tmphzv6ehpw']
+[2026-09-23T15:18:23.673+0000] {standard_task_runner.py:105} INFO - Job 13: Subtask load
+[2026-09-23T15:18:23.780+0000] {task_command.py:467} INFO - Running <TaskInstance: dss150p_sales_pipeline.load manual__2026-09-23T15:17:47+00:00 [running]> on host 458464e6a109
+[2026-09-23T15:18:24.007+0000] {taskinstance.py:3134} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='dss150p' AIRFLOW_CTX_DAG_ID='dss150p_sales_pipeline' AIRFLOW_CTX_TASK_ID='load' AIRFLOW_CTX_EXECUTION_DATE='2026-09-23T15:17:47+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-09-23T15:17:47+00:00'
+[2026-09-23T15:18:24.020+0000] {taskinstance.py:732} INFO - ::endgroup::
+[2026-09-23T15:18:24.048+0000] {subprocess.py:78} INFO - Tmp dir root location: /tmp
+[2026-09-23T15:18:24.054+0000] {subprocess.py:88} INFO - Running command: ['/usr/bin/bash', '-c', 'cd /opt/airflow/project && export PIPELINE_RUN_ID=\'manual__2026-09-23T15:17:47+00:00\' && if [ "partition" = "partition" ]; then python -m src.cli load-partition --year 2026 --month 1; else python -m src.cli load; fi']
+[2026-09-23T15:18:24.084+0000] {subprocess.py:99} INFO - Output:
+[2026-09-23T15:18:26.195+0000] {subprocess.py:106} INFO - 2026-09-23 15:18:26,195 - INFO - [dss150p_pipeline] Starting stage: Load Partition
+[2026-09-23T15:18:26.202+0000] {subprocess.py:106} INFO - 2026-09-23 15:18:26,202 - INFO - [dss150p_pipeline] Loading partition 2026-1 from /opt/airflow/project/data/partitioned/order_year=2026/order_month=1
+[2026-09-23T15:18:32.690+0000] {subprocess.py:106} INFO - 2026-09-23 15:18:32,690 - INFO - [dss150p_pipeline] Successfully loaded partition into PostgreSQL. Upserted 0 rows.
+[2026-09-23T15:18:32.693+0000] {subprocess.py:106} INFO - 2026-09-23 15:18:32,692 - INFO - [dss150p_pipeline] Successfully completed stage: Load Partition
+[2026-09-23T15:18:32.937+0000] {subprocess.py:110} INFO - Command exited with return code 0
+[2026-09-23T15:18:32.996+0000] {taskinstance.py:341} INFO - ::group::Post task execution logs
+[2026-09-23T15:18:32.999+0000] {taskinstance.py:353} INFO - Marking task as SUCCESS. dag_id=dss150p_sales_pipeline, task_id=load, run_id=manual__2026-09-23T15:17:47+00:00, execution_date=20260923T151747, start_date=20260923T151823, end_date=20260923T151832
+[2026-09-23T15:18:33.115+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-09-23T15:18:33.162+0000] {taskinstance.py:3901} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2026-09-23T15:18:33.168+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
