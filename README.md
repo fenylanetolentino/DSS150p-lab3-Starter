@@ -1,4 +1,4 @@
-# DSS150P Laboratory 3 Starter Repository
+    # DSS150P Laboratory 3 Starter Repository
 
 This repository supports Module 2: Pipeline Construction, Storage, and Orchestration.
 It is intentionally incomplete. Students must implement the marked TODOs and document their decisions.
