@@ -95,8 +95,54 @@ def main():
             
         execute_stage('Load', run_load)
 
+    # Wire up Benchmark
+    if args.command == 'benchmark':
+        from src.benchmark.storage import run_benchmark
+        from src.config import path_for
+        import os
+
+        def run_bench():
+            curated_base = path_for('curated_dir')
+            run_dirs = [d for d in curated_base.iterdir() if d.is_dir() and d.name.startswith('run_id=')]
+            if not run_dirs:
+                raise FileNotFoundError("No curated data found to benchmark. Run 'transform' first.")
+
+            latest_run_dir = max(run_dirs, key=os.path.getmtime)
+            parquet_file = latest_run_dir / 'sales_order_lines.parquet'
+            benchmark_dir = PROJECT_ROOT / 'data' / 'benchmarks'
+
+            logger.info(f"Running storage benchmark on {parquet_file}")
+            results = run_benchmark(str(parquet_file), str(benchmark_dir), args.repeats)
+
+            print("\n" + "="*60)
+            print("BENCHMARK RESULTS")
+            print("="*60)
+            print(results.to_string(index=False))
+            print("="*60 + "\n")
+
+        execute_stage('Benchmark', run_bench)
+
+   # Wire up Load Partition
+    if args.command == 'load-partition':
+        from src.load.postgres import load_partition
+        from src.config import PROJECT_ROOT
+        import pandas as pd
+        
+        def run_load_partition():
+            partition_path = PROJECT_ROOT / 'data' / 'partitioned' / f'order_year={args.year}' / f'order_month={args.month}'
+            if not partition_path.exists():
+                raise FileNotFoundError(f"Partition not found: {partition_path}")
+            
+            logger.info(f"Loading partition {args.year}-{args.month} from {partition_path}")
+            df = pd.read_parquet(partition_path)
+            
+            rows = load_partition(df, args.year, args.month, run_id)
+            logger.info(f"Successfully loaded partition into PostgreSQL. Upserted {rows} rows.")
+            
+        execute_stage('Load Partition', run_load_partition)
+
     # Leave the others as NotImplemented for now
-    if args.command in ('validate', 'benchmark', 'load-partition'):
+    if args.command == 'validate':
         raise NotImplementedError(f"Command '{args.command}' is not yet wired up.")
 
 if __name__ == '__main__':

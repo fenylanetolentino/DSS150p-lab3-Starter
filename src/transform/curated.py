@@ -1,7 +1,7 @@
 import pandas as pd
 import hashlib
 from pathlib import Path
-from src.config import path_for
+from src.config import path_for, PROJECT_ROOT
 
 def build_curated(staging_dfs: dict, run_id: str):
     """Join staging orders/customers/products and create analysis-ready sales rows."""
@@ -63,8 +63,23 @@ def build_curated(staging_dfs: dict, run_id: str):
     else:
         curated['record_hash'] = pd.Series(dtype='str')
         
+    # --- PARTITIONING (GOAL 3 TASK C) ---
+    # Derive order_year and order_month from order_timestamp
+    curated['order_timestamp'] = pd.to_datetime(curated['order_timestamp'], utc=True)
+    curated['order_year'] = curated['order_timestamp'].dt.year
+    curated['order_month'] = curated['order_timestamp'].dt.month
+
     # --- 6. OUTPUT ---
+    # 1. Standard curated output (for Goal 2 / normal loads)
     curated.to_parquet(curated_dir / 'sales_order_lines.parquet', index=False)
+    
+    # 2. Partitioned output (for Goal 3 Task C)
+    partitioned_dir = PROJECT_ROOT / 'data' / 'partitioned'
+    curated.to_parquet(
+        partitioned_dir, 
+        partition_cols=['order_year', 'order_month'], 
+        index=False
+    )
     
     quar_df = pd.DataFrame(quarantine_records) if quarantine_records else pd.DataFrame(columns=['dataset', 'record_id', 'reason'])
     if not quar_df.empty:

@@ -58,4 +58,32 @@ def upsert_curated(df: pd.DataFrame, run_id: str) -> int:
 
 def load_partition(df: pd.DataFrame, year: int, month: int, run_id: str) -> int:
     """Load only a selected year/month partition and record audit.partition_loads."""
-    raise NotImplementedError('Implement Goal 3 selected-partition load')
+    if df.empty:
+        return 0
+        
+    # 1. Use our existing UPSERT logic so the partition load remains rerun-safe and deduplicated
+    rows_affected = upsert_curated(df, run_id)
+    
+    # 2. Format the partition key (e.g., '2026-01') to match the professor's schema
+    partition_key = f"{year}-{month:02d}"
+    loaded_at = pd.Timestamp.utcnow()
+    
+    # 3. Record this action in the audit table using partition_key and row_count
+    engine = get_engine()
+    with engine.begin() as conn:
+        audit_sql = text("""
+            INSERT INTO audit.partition_loads (partition_key, loaded_at_utc, row_count, pipeline_run_id)
+            VALUES (:partition_key, :loaded_at, :row_count, :run_id)
+            ON CONFLICT (partition_key) DO UPDATE SET
+                loaded_at_utc = EXCLUDED.loaded_at_utc,
+                row_count = EXCLUDED.row_count,
+                pipeline_run_id = EXCLUDED.pipeline_run_id;
+        """)
+        conn.execute(audit_sql, {
+            "partition_key": partition_key, 
+            "loaded_at": loaded_at, 
+            "row_count": len(df), 
+            "run_id": run_id
+        })
+        
+    return rows_affected
