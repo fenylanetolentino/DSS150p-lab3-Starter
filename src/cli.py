@@ -136,7 +136,6 @@ def main():
    # Wire up Load Partition
     if args.command == 'load-partition':
         from src.load.postgres import load_partition
-        from src.config import PROJECT_ROOT
         import pandas as pd
 
         def run_load_partition():
