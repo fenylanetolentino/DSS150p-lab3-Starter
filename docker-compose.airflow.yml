@@ -29,7 +29,7 @@ services:
       - -c
       - |
         airflow db migrate &&
-        airflow users create --username admin --password admin --firstname DSS150P --lastname Admin --role Admin --email admin@example.com || true
+        airflow users create --username admin --password ${AIRFLOW_ADMIN_PASSWORD} --firstname DSS150P --lastname Admin --role Admin --email admin@example.com || true
 
   airflow-webserver:
     <<: *airflow-common
