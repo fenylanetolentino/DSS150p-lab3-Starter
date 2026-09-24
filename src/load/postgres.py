@@ -10,6 +10,19 @@ def get_engine():
     return create_engine(url)
 
 
+def _dedupe_by_order_id(df: pd.DataFrame) -> pd.DataFrame:
+    """Keep one row per order_id (the most recently updated one).
+
+    Guards against duplicate keys in the input, which would otherwise make
+    INSERT ... ON CONFLICT DO UPDATE fail with CardinalityViolation.
+    """
+    if "order_id" not in df.columns:
+        return df
+    if "source_updated_at" in df.columns:
+        df = df.sort_values("source_updated_at")
+    return df.drop_duplicates("order_id", keep="last")
+
+
 def upsert_curated(df: pd.DataFrame, run_id: str) -> int:
     """
     Load curated.sales_order_lines using rerun-safe UPSERT semantics.
@@ -28,7 +41,7 @@ def upsert_curated(df: pd.DataFrame, run_id: str) -> int:
         # Clean up any leftover temp table from a previous failed run
         conn.execute(text(f"DROP TABLE IF EXISTS curated.{temp_table};"))
 
-        # NEW: Dynamically fetch allowed columns from the database schema
+        # Dynamically fetch allowed columns from the database schema
         valid_cols_query = text("""
             SELECT column_name 
             FROM information_schema.columns 
@@ -39,6 +52,10 @@ def upsert_curated(df: pd.DataFrame, run_id: str) -> int:
         # Filter the DataFrame to only include columns that actually exist in the DB
         cols_to_keep = [c for c in df.columns if c in valid_columns]
         df_filtered = df[cols_to_keep]
+
+        # Safety net: one row per order_id, so the upsert can never hit
+        # "ON CONFLICT DO UPDATE command cannot affect row a second time"
+        df_filtered = _dedupe_by_order_id(df_filtered)
 
         # 1. Load filtered data to a temporary staging table
         df_filtered.to_sql(temp_table, con=conn, schema='curated', if_exists='replace', index=False)
@@ -70,12 +87,15 @@ def load_partition(df: pd.DataFrame, year: int, month: int, run_id: str) -> int:
     if df.empty:
         return 0
 
+    # Deduplicate first so the audit row_count reflects the true partition size
+    df = _dedupe_by_order_id(df)
+
     # 1. Use our existing UPSERT logic so the partition load remains rerun-safe and deduplicated
     rows_affected = upsert_curated(df, run_id)
 
     # 2. Format the partition key (e.g., '2026-01') to match the professor's schema
     partition_key = f"{year}-{month:02d}"
-    loaded_at = pd.Timestamp.utcnow()
+    loaded_at = pd.Timestamp.now(tz="UTC")
 
     # 3. Record this action in the audit table using partition_key and row_count
     engine = get_engine()

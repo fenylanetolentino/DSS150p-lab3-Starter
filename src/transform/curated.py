@@ -1,6 +1,7 @@
 import pandas as pd
 import hashlib
 from pathlib import Path
+import shutil
 from src.config import path_for, PROJECT_ROOT
 
 def build_curated(staging_dfs: dict, run_id: str):
@@ -73,13 +74,18 @@ def build_curated(staging_dfs: dict, run_id: str):
     # 1. Standard curated output (for Goal 2 / normal loads)
     curated.to_parquet(curated_dir / 'sales_order_lines.parquet', index=False)
     
-    # 2. Partitioned output (for Goal 3 Task C)
+        # 2. Partitioned output (for Goal 3 Task C)
     partitioned_dir = PROJECT_ROOT / 'data' / 'partitioned'
+    # Replace old partitions each run instead of appending duplicate files
+    for old in partitioned_dir.glob('order_year=*'):
+        shutil.rmtree(old, ignore_errors=True)
+    partitioned_dir.mkdir(parents=True, exist_ok=True)
     curated.to_parquet(
-        partitioned_dir, 
-        partition_cols=['order_year', 'order_month'], 
+        partitioned_dir,
+        partition_cols=['order_year', 'order_month'],
         index=False
     )
+    
     
     quar_df = pd.DataFrame(quarantine_records) if quarantine_records else pd.DataFrame(columns=['dataset', 'record_id', 'reason'])
     if not quar_df.empty:
