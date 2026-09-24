@@ -1,0 +1,5 @@
+format,size_bytes,write_time_sec,read_full_time_sec,read_filtered_time_sec,row_count
+CSV,17587347,3.3989,0.6944,0.2405,49897
+JSON Lines,28607892,2.4561,1.5325,1.3175,49897
+Parquet (Snappy),5876571,0.1895,0.0847,0.0149,49897
+PostgreSQL,14270464,,1.4595,0.0395,49897
